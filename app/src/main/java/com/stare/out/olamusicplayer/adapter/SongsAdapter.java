@@ -1,6 +1,7 @@
 package com.stare.out.olamusicplayer.adapter;
 
 import android.content.Context;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
@@ -8,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
@@ -27,9 +29,11 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.stare.out.olamusicplayer.MainActivity;
 import com.stare.out.olamusicplayer.R;
 import com.stare.out.olamusicplayer.models.Music;
+import com.stare.out.olamusicplayer.utils.DBHelper;
 import com.stare.out.olamusicplayer.utils.customfonts.MyTextViewBold;
 import com.stare.out.olamusicplayer.utils.customfonts.MyTextViewSemibold;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,7 +45,9 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
     private static final String TAG = "SongsAdapter";
     private Context context;
     private List<Music> musicList;
+    private List<Music> favoriteMusicList;
     public ExoPlayer exoPlayer;
+    private DBHelper dbHelper;
 
     public SongsAdapter() {
     }
@@ -49,6 +55,9 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
     public SongsAdapter(Context context, List<Music> musicList) {
         this.context = context;
         this.musicList = musicList;
+        favoriteMusicList = new ArrayList<>();
+        dbHelper = new DBHelper(context);
+        getFavoriteMusic();
     }
 
     @Override
@@ -57,8 +66,12 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
         return new SongsViewHolder(itemView);
     }
 
+    private void getFavoriteMusic(){
+        favoriteMusicList = dbHelper.getAllFavoriteMusic();
+    }
+
     @Override
-    public void onBindViewHolder(SongsViewHolder holder, int position) {
+    public void onBindViewHolder(final SongsViewHolder holder, int position) {
 
         final Music music = musicList.get(position);
         Glide.with(context).load(music.getCoverImage()).thumbnail(0.01f).into(holder.songImageView);
@@ -69,6 +82,38 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
             public void onClick(View view) {
                 MainActivity.setMusicDetails(music.getSong(), music.getArtists());
                 playMusic(music.getUrl());
+            }
+        });
+        for (Music music1:favoriteMusicList
+             ) {
+            Log.d(TAG, "favorite musics: "+ music1.getSong());
+            if (music1.getSong().equals(music.getSong())){
+                holder.favoriteBtn.setImageResource(R.drawable.ic_favorite_24dp);
+                break;
+            }
+        }
+        holder.favoriteBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                boolean isFavorite = false;
+                int i=1;
+                for (Music music1:favoriteMusicList
+                        ) {
+                    if (music1.getSong().equals(music.getSong())){
+                        isFavorite = true;
+                        break;
+                    }
+                    i++;
+                }
+                if (isFavorite){
+                    dbHelper.deleteFavoriteMusic(i);
+                    holder.favoriteBtn.setImageResource(R.drawable.ic_favorite_border_black_24dp);
+                }else {
+                    boolean isSuccess = dbHelper.insertFavoriteMusic(music.getSong(), music.getCoverImage(), music.getArtists(), music.getUrl());
+                    holder.favoriteBtn.setImageResource(R.drawable.ic_favorite_24dp);
+                    Log.d(TAG, "insertion success: "+ isSuccess);
+                }
+                getFavoriteMusic();
             }
         });
     }
@@ -113,6 +158,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
         ImageView songImageView;
         MyTextViewBold songNameTextView;
         MyTextViewSemibold songArtistTextView;
+        ImageButton favoriteBtn;
 
         public SongsViewHolder(View itemView) {
             super(itemView);
@@ -120,6 +166,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
             songImageView = (ImageView) itemView.findViewById(R.id.song_iamge);
             songNameTextView = (MyTextViewBold) itemView.findViewById(R.id.song_name);
             songArtistTextView = (MyTextViewSemibold) itemView.findViewById(R.id.song_artist);
+            favoriteBtn = (ImageButton) itemView.findViewById(R.id.favoriteBtn);
 
         }
     }
