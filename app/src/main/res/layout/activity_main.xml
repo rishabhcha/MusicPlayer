@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,6 +8,53 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/SongsRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:layout_above="@+id/playerLinearLayout"/>
 
-</android.support.constraint.ConstraintLayout>
+    <LinearLayout
+        android:id="@+id/playerLinearLayout"
+        android:visibility="gone"
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#000000"
+        android:padding="8dp"
+        android:gravity="center">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_weight="1">
+
+            <com.stare.out.olamusicplayer.utils.customfonts.MyTextViewSemibold
+                android:id="@+id/music_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="@string/song_name"
+                android:textColor="#ffffff"/>
+
+            <com.stare.out.olamusicplayer.utils.customfonts.MyTextViewLight
+                android:id="@+id/music_artist"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/artist_name"
+                android:textColor="#ffffff"
+                android:textSize="12sp"/>
+
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/music_playPause_btn"
+            android:padding="4dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_pause_24dp"
+            android:background="@null"
+            android:onClick="PlayPauseMusic"/>
+
+    </LinearLayout>
+
+</RelativeLayout>

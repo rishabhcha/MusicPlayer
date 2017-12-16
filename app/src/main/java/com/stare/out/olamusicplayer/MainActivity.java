@@ -6,12 +6,18 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.stare.out.olamusicplayer.adapter.SongsAdapter;
 import com.stare.out.olamusicplayer.api.API;
 import com.stare.out.olamusicplayer.models.Music;
 import com.stare.out.olamusicplayer.utils.Progress_Dialog;
+import com.stare.out.olamusicplayer.utils.customfonts.MyTextViewLight;
+import com.stare.out.olamusicplayer.utils.customfonts.MyTextViewRegular;
+import com.stare.out.olamusicplayer.utils.customfonts.MyTextViewSemibold;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,16 +33,36 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
     private RecyclerView SongsRecyclerView;
+    private SongsAdapter songsAdapter;
+    private static LinearLayout playerLinearLayout;
+    private static MyTextViewSemibold music_name;
+    private static MyTextViewLight music_artist;
+    public static ImageButton music_palyPause_btn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        playerLinearLayout = (LinearLayout) findViewById(R.id.playerLinearLayout);
+        music_artist = (MyTextViewLight) findViewById(R.id.music_artist);
+        music_name = (MyTextViewSemibold) findViewById(R.id.music_name);
+        music_palyPause_btn = (ImageButton) findViewById(R.id.music_playPause_btn);
+
         SongsRecyclerView = (RecyclerView) findViewById(R.id.SongsRecyclerView);
         SongsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         getSongs();
+
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        SongsAdapter songsAdapter = new SongsAdapter();
+        songsAdapter.stopPlayer();
+        songsAdapter.releasePlayer();
 
     }
 
@@ -57,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onNext(List<Music> musics) {
                             progress_dialog.hideProgressDialog();
-                            SongsAdapter songsAdapter = new SongsAdapter(getApplicationContext(), musics);
+                            songsAdapter = new SongsAdapter(getApplicationContext(), musics);
                             SongsRecyclerView.setAdapter(songsAdapter);
                         }
                         @Override
@@ -74,5 +100,15 @@ public class MainActivity extends AppCompatActivity {
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    public static void setMusicDetails(String songName, String songArtist){
+        playerLinearLayout.setVisibility(View.VISIBLE);
+        music_name.setText(songName);
+        music_artist.setText(songArtist);
+    }
+
+    public void PlayPauseMusic(View view) {
+        songsAdapter.playPausePlayer();
     }
 }
