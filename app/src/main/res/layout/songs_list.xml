@@ -49,12 +49,29 @@
 
             </LinearLayout>
 
-            <com.stare.out.olamusicplayer.utils.customfonts.MyTextViewSemibold
-                android:id="@+id/song_artist"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/artist_name"
-                android:layout_marginTop="8dp"/>
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <com.stare.out.olamusicplayer.utils.customfonts.MyTextViewSemibold
+                    android:id="@+id/song_artist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/artist_name"
+                    android:layout_marginTop="8dp"
+                    android:layout_weight="1"/>
+
+                <ImageButton
+                    android:id="@+id/downloadSongBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_file_download_black_24dp"
+                    android:background="@null"
+                    android:layout_marginTop="4dp"/>
+
+            </LinearLayout>
 
         </LinearLayout>
 

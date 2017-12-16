@@ -30,6 +30,7 @@ import com.stare.out.olamusicplayer.MainActivity;
 import com.stare.out.olamusicplayer.R;
 import com.stare.out.olamusicplayer.models.Music;
 import com.stare.out.olamusicplayer.utils.DBHelper;
+import com.stare.out.olamusicplayer.utils.DownloadSong;
 import com.stare.out.olamusicplayer.utils.customfonts.MyTextViewBold;
 import com.stare.out.olamusicplayer.utils.customfonts.MyTextViewSemibold;
 
@@ -116,6 +117,14 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
                 getFavoriteMusic();
             }
         });
+
+        holder.downloadSongBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                DownloadSong downloadSong = new DownloadSong(context);
+                downloadSong.startDownload(music.getUrl());
+            }
+        });
     }
 
     @Override
@@ -158,7 +167,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
         ImageView songImageView;
         MyTextViewBold songNameTextView;
         MyTextViewSemibold songArtistTextView;
-        ImageButton favoriteBtn;
+        ImageButton favoriteBtn, downloadSongBtn;
 
         public SongsViewHolder(View itemView) {
             super(itemView);
@@ -167,7 +176,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
             songNameTextView = (MyTextViewBold) itemView.findViewById(R.id.song_name);
             songArtistTextView = (MyTextViewSemibold) itemView.findViewById(R.id.song_artist);
             favoriteBtn = (ImageButton) itemView.findViewById(R.id.favoriteBtn);
-
+            downloadSongBtn = (ImageButton) itemView.findViewById(R.id.downloadSongBtn);
         }
     }
 
