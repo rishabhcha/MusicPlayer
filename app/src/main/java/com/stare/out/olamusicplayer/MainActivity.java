@@ -1,9 +1,13 @@
 package com.stare.out.olamusicplayer;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -48,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements
         SearchView.OnQueryTextListener{
 
     private static final String TAG = "MainActivity";
+    private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1111;
 
     private RecyclerView SongsRecyclerView, SlideUpRecyclerView;
     private LinearLayout playerLinearLayout;
@@ -203,21 +208,44 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
+        checkPermission();
+    }
 
-        PrefManager prefManager = new PrefManager(getApplicationContext());
-        String songName = prefManager.getMusicName();
-        String songArtist = prefManager.getMusicArtist();
-        String songUrl = prefManager.getMusicUrl();
-        String songImage = prefManager.getMusicIamge();
-        Log.d(TAG, "Last played song: "+songName+", "+songArtist);
+    private void checkPermission(){
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                Log.d(TAG,"permission is needed");
 
-        if (!TextUtils.isEmpty(songImage)){
-            setMusicPlayerDetails(songName, songArtist, songImage, songUrl);
-            exoMusicPlayer.playMusic(songUrl);
-            exoMusicPlayer.stopPlayer();
+            } else {
+                Log.d(TAG,"requesting permission");
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+            }
         }
+    }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG,"permission granted");
+                } else {
+                    Log.d(TAG,"permission denied");
+                    Toast.makeText(MainActivity.this, "This permission is required to store data!! Please grant it.", Toast.LENGTH_LONG).show();
+                    checkPermission();
+                }
+                return;
+            }
+        }
     }
 }
