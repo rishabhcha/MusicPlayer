@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -12,11 +13,17 @@ import com.stare.out.olamusicplayer.MainActivity;
 import com.stare.out.olamusicplayer.R;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 
 import static android.app.Notification.DEFAULT_LIGHTS;
 import static android.app.Notification.DEFAULT_SOUND;
@@ -28,8 +35,9 @@ import static android.app.Notification.DEFAULT_VIBRATE;
 
 public class DownloadSong {
 
-    Context context;
-    NotificationCompat.Builder mBuilder;
+    static Context context;
+    static NotificationCompat.Builder mBuilder;
+    private static final String TAG = "DownloadSong";
 
     public DownloadSong(Context context){
         this.context = context;
@@ -40,7 +48,7 @@ public class DownloadSong {
         new DownloadFileAsync().execute(url);
     }
 
-    class DownloadFileAsync extends AsyncTask<String, String, String> {
+    public static class DownloadFileAsync extends AsyncTask<String, String, String> {
 
         @Override
         protected void onPreExecute() {
@@ -50,26 +58,84 @@ public class DownloadSong {
 
         @Override
         protected String doInBackground(String... aurl) {
-            int count;
+            OutputStream outStream = null;
+            URLConnection uCon = null;
+            HttpURLConnection mHttpCon;
+            String localFileName = "OLA"+ System.currentTimeMillis()+".mp3";
+            String destinationDir = Environment.getExternalStorageDirectory().toString() + "/OlaMusicPlayer";
+
+            InputStream is = null;
             try {
-                URL url = new URL(aurl[0]);
-                URLConnection conexion = url.openConnection();
-                conexion.connect();
-                int lenghtOfFile = conexion.getContentLength();
-                Log.d("ANDRO_ASYNC", "Lenght of file: " + lenghtOfFile);
-                InputStream input = new BufferedInputStream(url.openStream());
-                OutputStream output = new FileOutputStream("/sdcard/song.mp3");
-                byte data[] = new byte[1024];
-                long total = 0;
-                while ((count = input.read(data)) != -1) {
-                    total += count;
-                    output.write(data, 0, count);
+
+                URL url;
+                byte[] buf;
+                int ByteRead, ByteWritten = 0;
+                url = new URL(aurl[0]);
+                Log.d(TAG, "download: "+url);
+                outStream = new BufferedOutputStream(new FileOutputStream(
+                        destinationDir + localFileName));
+
+                try {
+
+                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.connect();
+                    String Location = urlConnection.getHeaderField("Location");
+                    Log.d(TAG,"location: "+Location);
+//                    String ResponseCode = urlConnection.getResponseCode();
+//                    String ContentType = urlConnection.getContentType();
+//                    if ( result.ResponseCode == HttpURLConnection.HTTP_MOVED_TEMP || result.ResponseCode == HttpURLConnection.HTTP_MOVED_PERM )
+//                    {
+//                        String Location = urlConnection.getHeaderField("Location");
+//                    }
+
+                    Location = Location.replace("(", "/(");
+                    Location = Location.replace(")", "/)");
+                    Log.d("Updated Location: ", Location);
+                    URL url1 = new URL(Location);
+                    mHttpCon = (HttpURLConnection) url1.openConnection();
+
+//                    while (!url.toString().startsWith("https")) {
+//                        Log.d(TAG,"url: "+url);
+//                        mHttpCon.getResponseCode();
+//                        url = mHttpCon.getURL();
+//                        mHttpCon = (HttpURLConnection) url.openConnection();
+//
+//                    }
+
+                    is = mHttpCon.getInputStream();
+                    Log.d(TAG, "input stream recieved");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.d(TAG, "Error: "+e.getMessage());
+                    // url = new URL(e.getMessage().substring(
+                    // e.getMessage().indexOf("https"),
+                    // e.getMessage().length()));
+                    // outStream = new BufferedOutputStream(new FileOutputStream(
+                    // destinationDir + localFileName));
+                    //
+                    // uCon = url.openConnection();
+                    // is = uCon.getInputStream();
                 }
 
-                output.flush();
-                output.close();
-                input.close();
-            } catch (Exception e) {}
+                buf = new byte[1024];
+                while ((ByteRead = is.read(buf)) != -1) {
+                    outStream.write(buf, 0, ByteRead);
+                    ByteWritten += ByteRead;
+                }
+                Log.d(TAG,"Downloaded Successfully.");
+                Log.d(TAG,"File name:\"" + localFileName
+                        + "\"\nNo ofbytes :" + ByteWritten);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.d(TAG, "Error: "+e.getMessage());
+            } finally {
+                try {
+                    is.close();
+                    outStream.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             return null;
         }
 
@@ -79,7 +145,8 @@ public class DownloadSong {
         }
     }
 
-    private void showNotification(String message){
+
+    private static void showNotification(String message){
         mBuilder.setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("Ola Music Player")
                 .setContentText(message)

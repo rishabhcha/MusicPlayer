@@ -15,7 +15,9 @@ import android.widget.Toast;
 import com.stare.out.olamusicplayer.adapter.SongsAdapter;
 import com.stare.out.olamusicplayer.api.API;
 import com.stare.out.olamusicplayer.models.Music;
+import com.stare.out.olamusicplayer.utils.ExoMusicPlayer;
 import com.stare.out.olamusicplayer.utils.Progress_Dialog;
+import com.stare.out.olamusicplayer.utils.UpdateBottomPlayerUI;
 import com.stare.out.olamusicplayer.utils.customfonts.MyTextViewLight;
 import com.stare.out.olamusicplayer.utils.customfonts.MyTextViewRegular;
 import com.stare.out.olamusicplayer.utils.customfonts.MyTextViewSemibold;
@@ -28,19 +30,22 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements
+        UpdateBottomPlayerUI,
+        SearchView.OnQueryTextListener{
 
     private static final String TAG = "MainActivity";
 
     private RecyclerView SongsRecyclerView;
-    private SongsAdapter songsAdapter;
-    private static LinearLayout playerLinearLayout;
-    private static MyTextViewSemibold music_name;
-    private static MyTextViewLight music_artist;
-    public static ImageButton music_palyPause_btn;
+    private LinearLayout playerLinearLayout;
+    private MyTextViewSemibold music_name;
+    private MyTextViewLight music_artist;
+    public ImageButton music_palyPause_btn;
     private SearchView songSearchView;
     private List<Music> MusicList;
     private List<Music> SearchedMusicList;
+    private ExoMusicPlayer exoMusicPlayer;
+    private SongsAdapter songsAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
         MusicList = new ArrayList<>();
         SearchedMusicList = new ArrayList<>();
 
+        exoMusicPlayer = new ExoMusicPlayer(getApplicationContext(), MainActivity.this);
+
         SongsRecyclerView = (RecyclerView) findViewById(R.id.SongsRecyclerView);
         SongsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -62,22 +69,12 @@ public class MainActivity extends AppCompatActivity {
         songSearchView.setQueryHint("Search your song...");
         songSearchView.setIconifiedByDefault(false);
         songSearchView.setFocusable(false);
-        songSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                UpdateSongAdapter(newText);
-                return false;
-            }
-        });
+        songSearchView.setOnQueryTextListener(this);
 
         getSongs();
 
     }
+
 
     private void UpdateSongAdapter(String newText) {
         SearchedMusicList.clear();
@@ -87,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
                 SearchedMusicList.add(music);
             }
         }
-        songsAdapter = new SongsAdapter(getApplicationContext(), SearchedMusicList);
+        songsAdapter = new SongsAdapter(getApplicationContext(), SearchedMusicList, exoMusicPlayer ,MainActivity.this);
         SongsRecyclerView.setAdapter(songsAdapter);
     }
 
@@ -109,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                         public void onNext(List<Music> musics) {
                             MusicList = musics;
                             progress_dialog.hideProgressDialog();
-                            songsAdapter = new SongsAdapter(getApplicationContext(), musics);
+                            songsAdapter = new SongsAdapter(getApplicationContext(), musics, exoMusicPlayer, MainActivity.this);
                             SongsRecyclerView.setAdapter(songsAdapter);
                         }
                         @Override
@@ -128,24 +125,46 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public static void setMusicDetails(String songName, String songArtist){
+    public void PlayPauseMusic(View view) {
+        exoMusicPlayer.playPausePlayer();
+    }
+
+
+    @Override
+    public void setMusicPlayerDetails(String songName, String songArtist) {
         playerLinearLayout.setVisibility(View.VISIBLE);
         music_name.setText(songName);
         music_artist.setText(songArtist);
     }
 
-    public void PlayPauseMusic(View view) {
-        songsAdapter.playPausePlayer();
+    @Override
+    public void setPlayPauseBtnVisiblity(boolean isLoading) {
+        if (isLoading){
+            music_palyPause_btn.setVisibility(View.GONE);
+        }else{
+            music_palyPause_btn.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-
-        SongsAdapter songsAdapter = new SongsAdapter();
-        songsAdapter.stopPlayer();
-        songsAdapter.releasePlayer();
-
+    public void playPauseMusic(boolean isPlaying) {
+        if (isPlaying){
+            music_palyPause_btn.setImageResource(R.drawable.ic_play_arrow_24dp);
+            exoMusicPlayer.stopPlayer();
+        }else{
+            music_palyPause_btn.setImageResource(R.drawable.ic_pause_24dp);
+            exoMusicPlayer.startPlayer();
+        }
     }
 
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        return false;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        UpdateSongAdapter(newText);
+        return false;
+    }
 }
