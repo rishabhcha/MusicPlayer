@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content" android:layout_height="wrap_content"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/fav_song_image"
+            android:layout_width="180dp"
+            android:layout_height="100dp"
+            android:background="@color/bg_grey"
+            android:scaleType="centerCrop"/>
+
+        <com.stare.out.olamusicplayer.utils.customfonts.MyTextViewSemibold
+            android:id="@+id/fav_song_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/song_anme"
+            android:textColor="#000000"
+            android:textAlignment="center"/>
+
+        <com.stare.out.olamusicplayer.utils.customfonts.MyTextViewRegular
+            android:id="@+id/fav_song_artist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/artist_name"
+            android:textAlignment="center"/>
+
+    </LinearLayout>
+
+</android.support.v7.widget.CardView>

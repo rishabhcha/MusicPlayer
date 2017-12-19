@@ -8,6 +8,7 @@ import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.stare.out.olamusicplayer.MainActivity;
 import com.stare.out.olamusicplayer.R;
@@ -80,6 +81,7 @@ public class DownloadSong {
         protected void onPreExecute() {
             super.onPreExecute();
             showNotification("Downloading "+ songName +"......");
+            Toast.makeText(context, "Download Started!! Check Notification Panel", Toast.LENGTH_SHORT).show();
         }
 
         @Override
@@ -162,6 +164,7 @@ public class DownloadSong {
         @Override
         protected void onPostExecute(String unused) {
             showNotification("Download Complete");
+            Toast.makeText(context, "Download Completed!!", Toast.LENGTH_SHORT).show();
         }
     }
 

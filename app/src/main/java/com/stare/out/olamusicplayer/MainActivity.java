@@ -1,21 +1,34 @@
 package com.stare.out.olamusicplayer;
 
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.stare.out.olamusicplayer.adapter.FavSongAdapter;
 import com.stare.out.olamusicplayer.adapter.SongsAdapter;
 import com.stare.out.olamusicplayer.api.API;
+import com.stare.out.olamusicplayer.fragments.FavMusicFragment;
+import com.stare.out.olamusicplayer.fragments.MusicHistoryFragment;
 import com.stare.out.olamusicplayer.models.Music;
+import com.stare.out.olamusicplayer.utils.DBHelper;
 import com.stare.out.olamusicplayer.utils.ExoMusicPlayer;
+import com.stare.out.olamusicplayer.utils.PrefManager;
 import com.stare.out.olamusicplayer.utils.Progress_Dialog;
 import com.stare.out.olamusicplayer.utils.UpdateBottomPlayerUI;
 import com.stare.out.olamusicplayer.utils.customfonts.MyTextViewLight;
@@ -36,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private static final String TAG = "MainActivity";
 
-    private RecyclerView SongsRecyclerView;
+    private RecyclerView SongsRecyclerView, SlideUpRecyclerView;
     private LinearLayout playerLinearLayout;
     private MyTextViewSemibold music_name;
     private MyTextViewLight music_artist;
@@ -46,6 +59,8 @@ public class MainActivity extends AppCompatActivity implements
     private List<Music> SearchedMusicList;
     private ExoMusicPlayer exoMusicPlayer;
     private SongsAdapter songsAdapter;
+    private ImageView playerSongImageView;
+    private RecyclerView FavRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +71,7 @@ public class MainActivity extends AppCompatActivity implements
         music_artist = (MyTextViewLight) findViewById(R.id.music_artist);
         music_name = (MyTextViewSemibold) findViewById(R.id.music_name);
         music_palyPause_btn = (ImageButton) findViewById(R.id.music_playPause_btn);
+        playerSongImageView = (ImageView) findViewById(R.id.playerSongImageView);
 
         MusicList = new ArrayList<>();
         SearchedMusicList = new ArrayList<>();
@@ -65,6 +81,12 @@ public class MainActivity extends AppCompatActivity implements
         SongsRecyclerView = (RecyclerView) findViewById(R.id.SongsRecyclerView);
         SongsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        SlideUpRecyclerView = (RecyclerView) findViewById(R.id.SlideUpRecyclerView);
+        SlideUpRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        FavRecyclerView = (RecyclerView) findViewById(R.id.FavRecyclerView);
+        FavRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
         songSearchView = (SearchView) findViewById(R.id.songSearchView);
         songSearchView.setQueryHint("Search your song...");
         songSearchView.setIconifiedByDefault(false);
@@ -73,8 +95,9 @@ public class MainActivity extends AppCompatActivity implements
 
         getSongs();
 
-    }
+        setFavoriteSongAdapter();
 
+    }
 
     private void UpdateSongAdapter(String newText) {
         SearchedMusicList.clear();
@@ -108,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements
                             progress_dialog.hideProgressDialog();
                             songsAdapter = new SongsAdapter(getApplicationContext(), musics, exoMusicPlayer, MainActivity.this);
                             SongsRecyclerView.setAdapter(songsAdapter);
+                            SlideUpRecyclerView.setAdapter(songsAdapter);
                         }
                         @Override
                         public void onError(Throwable e) {
@@ -129,12 +153,14 @@ public class MainActivity extends AppCompatActivity implements
         exoMusicPlayer.playPausePlayer();
     }
 
-
     @Override
-    public void setMusicPlayerDetails(String songName, String songArtist) {
+    public void setMusicPlayerDetails(String songName, String songArtist, String imageUrl, String songUrl) {
         playerLinearLayout.setVisibility(View.VISIBLE);
         music_name.setText(songName);
         music_artist.setText(songArtist);
+        Glide.with(MainActivity.this).load(imageUrl).thumbnail(0.1f).into(playerSongImageView);
+        PrefManager prefManager = new PrefManager(getApplicationContext());
+        prefManager.setMusicDetails(songName, songArtist, songUrl, imageUrl);
     }
 
     @Override
@@ -158,6 +184,14 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
+    public void setFavoriteSongAdapter() {
+        DBHelper dbHelper = new DBHelper(getApplicationContext());
+        List<Music> favMusicList = dbHelper.getAllFavoriteMusic();
+        FavSongAdapter favSongAdapter = new FavSongAdapter(getApplicationContext(), favMusicList, exoMusicPlayer, MainActivity.this);
+        FavRecyclerView.setAdapter(favSongAdapter);
+    }
+
+    @Override
     public boolean onQueryTextSubmit(String query) {
         return false;
     }
@@ -166,5 +200,24 @@ public class MainActivity extends AppCompatActivity implements
     public boolean onQueryTextChange(String newText) {
         UpdateSongAdapter(newText);
         return false;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        PrefManager prefManager = new PrefManager(getApplicationContext());
+        String songName = prefManager.getMusicName();
+        String songArtist = prefManager.getMusicArtist();
+        String songUrl = prefManager.getMusicUrl();
+        String songImage = prefManager.getMusicIamge();
+        Log.d(TAG, "Last played song: "+songName+", "+songArtist);
+
+        if (!TextUtils.isEmpty(songImage)){
+            setMusicPlayerDetails(songName, songArtist, songImage, songUrl);
+            exoMusicPlayer.playMusic(songUrl);
+            exoMusicPlayer.stopPlayer();
+        }
+
     }
 }

@@ -10,6 +10,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.stare.out.olamusicplayer.MainActivity;
 import com.stare.out.olamusicplayer.R;
 import com.stare.out.olamusicplayer.models.Music;
 import com.stare.out.olamusicplayer.utils.DBHelper;
@@ -70,10 +71,11 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                updateBottomPlayerUI.setMusicPlayerDetails(music.getSong(), music.getArtists());
+                updateBottomPlayerUI.setMusicPlayerDetails(music.getSong(), music.getArtists(), music.getCoverImage(), music.getUrl());
                 exoMusicPlayer.playMusic(music.getUrl());
             }
         });
+        holder.favoriteBtn.setImageResource(R.drawable.ic_favorite_border_black_24dp);
         for (Music music1:favoriteMusicList
              ) {
             Log.d(TAG, "favorite musics: "+ music1.getSong());
@@ -86,17 +88,15 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
             @Override
             public void onClick(View view) {
                 boolean isFavorite = false;
-                int i=1;
                 for (Music music1:favoriteMusicList
                         ) {
                     if (music1.getSong().equals(music.getSong())){
                         isFavorite = true;
+                        dbHelper.deleteFavoriteMusic(music.getSong());
                         break;
                     }
-                    i++;
                 }
                 if (isFavorite){
-                    dbHelper.deleteFavoriteMusic(i);
                     holder.favoriteBtn.setImageResource(R.drawable.ic_favorite_border_black_24dp);
                 }else {
                     boolean isSuccess = dbHelper.insertFavoriteMusic(music.getSong(), music.getCoverImage(), music.getArtists(), music.getUrl());
@@ -104,6 +104,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
                     Log.d(TAG, "insertion success: "+ isSuccess);
                 }
                 getFavoriteMusic();
+                updateBottomPlayerUI.setFavoriteSongAdapter();
             }
         });
 

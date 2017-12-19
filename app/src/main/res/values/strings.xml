@@ -2,4 +2,11 @@
     <string name="app_name">Ola Music Player</string>
     <string name="artist_name">Artist Name</string>
     <string name="song_name">Song Name</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="favorite">Favorite Playlist</string>
+    <string name="history">History</string>
+    <string name="song_anme">Song Name</string>
+    <string name="all_songs">All Songs</string>
 </resources>

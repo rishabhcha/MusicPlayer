@@ -6,4 +6,17 @@
 
     <color name="bg_grey">#d7dfde</color>
     <color name="bg_dark_grey">#252525</color>
+
+    <!-- grey color -->
+    <color name="grey_100">#fff5f5f5</color>
+    <color name="grey_300">#ffe0e0e0</color>
+    <color name="grey_50">#fffafafa</color>
+    <color name="grey_600">#ff757575</color>
+    <color name="grey_800">#ff424242</color>
+    <color name="grey_850">#ff303030</color>
+    <color name="grey_900">#ff212121</color>
+
+    <color name="white_card">#ffffff</color>
+    <color name="type_bkgnd_unsupported">#88cccccc</color>
+
 </resources>

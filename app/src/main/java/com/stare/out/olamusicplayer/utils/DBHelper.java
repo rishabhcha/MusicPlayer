@@ -58,11 +58,11 @@ public class DBHelper extends SQLiteOpenHelper {
         return true;
     }
 
-    public Integer deleteFavoriteMusic(Integer id) {
+    public Integer deleteFavoriteMusic(String name) {
         SQLiteDatabase db = this.getWritableDatabase();
         return db.delete(FAVORITE_TABLE_NAME,
-                FAVORITE_COLUMN_ID + " = ? ",
-                new String[] { Integer.toString(id) });
+                FAVORITE_COLUMN_NAME + " = ? ",
+                new String[] { name });
     }
 
 
