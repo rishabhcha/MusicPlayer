@@ -24,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.util.regex.Pattern;
 
 import static android.app.Notification.DEFAULT_LIGHTS;
 import static android.app.Notification.DEFAULT_SOUND;
@@ -38,33 +39,62 @@ public class DownloadSong {
     static Context context;
     static NotificationCompat.Builder mBuilder;
     private static final String TAG = "DownloadSong";
+    private static String songName;
+    static NotificationManager mNotificationManager;
 
     public DownloadSong(Context context){
         this.context = context;
-        mBuilder = new NotificationCompat.Builder(context);
+        initializeNotificationBuilder();
     }
 
-    public void startDownload(String url) {
+    //Notification Builder to show download notification
+    private void initializeNotificationBuilder() {
+        mBuilder = new NotificationCompat.Builder(context);
+        mBuilder.setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("Ola Music Player")
+                .setAutoCancel(true)
+                .setDefaults(DEFAULT_SOUND|DEFAULT_VIBRATE|DEFAULT_LIGHTS);
+
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.setAction(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, (int)
+                System.currentTimeMillis(), intent, 0);
+        mBuilder.setContentIntent(pendingIntent);
+
+        mNotificationManager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    }
+
+    //Call this function to start download song
+    public void startDownload(String url, String name) {
+        songName = name;
         new DownloadFileAsync().execute(url);
     }
 
-    public static class DownloadFileAsync extends AsyncTask<String, String, String> {
+    //Async class to handle download of song
+    public static class DownloadFileAsync extends AsyncTask<String, Integer, String> {
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            showNotification("Downloading Song...");
+            showNotification("Downloading "+ songName +"......");
         }
 
         @Override
         protected String doInBackground(String... aurl) {
             OutputStream outStream = null;
             URLConnection uCon = null;
-            HttpURLConnection mHttpCon;
-            String localFileName = "OLA"+ System.currentTimeMillis()+".mp3";
-            String destinationDir = Environment.getExternalStorageDirectory().toString() + "/OlaMusicPlayer";
-
+            HttpURLConnection urlConnection;
+            String localFileName = songName+".mp3";
+            String destinationDir = Environment.getExternalStorageDirectory().toString() + "/OlaMusicPlayer/";
+            File folder = new File(destinationDir);
+            if (!folder.exists()){
+                folder.mkdir();
+            }
             InputStream is = null;
+            int fileLength = 0;
             try {
 
                 URL url;
@@ -74,53 +104,36 @@ public class DownloadSong {
                 Log.d(TAG, "download: "+url);
                 outStream = new BufferedOutputStream(new FileOutputStream(
                         destinationDir + localFileName));
-
                 try {
 
-                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection = (HttpURLConnection) url.openConnection();
                     urlConnection.connect();
-                    String Location = urlConnection.getHeaderField("Location");
-                    Log.d(TAG,"location: "+Location);
-//                    String ResponseCode = urlConnection.getResponseCode();
-//                    String ContentType = urlConnection.getContentType();
-//                    if ( result.ResponseCode == HttpURLConnection.HTTP_MOVED_TEMP || result.ResponseCode == HttpURLConnection.HTTP_MOVED_PERM )
-//                    {
-//                        String Location = urlConnection.getHeaderField("Location");
-//                    }
 
-                    Location = Location.replace("(", "/(");
-                    Location = Location.replace(")", "/)");
-                    Log.d("Updated Location: ", Location);
-                    URL url1 = new URL(Location);
-                    mHttpCon = (HttpURLConnection) url1.openConnection();
+                    int ResponseCode = urlConnection.getResponseCode();
+                    Log.d(TAG, "Response code: "+ResponseCode);
+                    String ContentType = urlConnection.getContentType();
+                    if ( ResponseCode == HttpURLConnection.HTTP_MOVED_TEMP || ResponseCode == HttpURLConnection.HTTP_MOVED_PERM )
+                    {
+                        String Location = Pattern.quote(urlConnection.getHeaderField("Location"));
+                        Log.d(TAG,"location: "+Location.substring(2,Location.length()-2));
 
-//                    while (!url.toString().startsWith("https")) {
-//                        Log.d(TAG,"url: "+url);
-//                        mHttpCon.getResponseCode();
-//                        url = mHttpCon.getURL();
-//                        mHttpCon = (HttpURLConnection) url.openConnection();
-//
-//                    }
-
-                    is = mHttpCon.getInputStream();
+                        URL url1 = new URL(Location.substring(2,Location.length()-2));
+                        urlConnection = (HttpURLConnection) url1.openConnection();
+                    }
+                    fileLength = urlConnection.getContentLength();
+                    is = urlConnection.getInputStream();
                     Log.d(TAG, "input stream recieved");
                 } catch (Exception e) {
                     e.printStackTrace();
                     Log.d(TAG, "Error: "+e.getMessage());
-                    // url = new URL(e.getMessage().substring(
-                    // e.getMessage().indexOf("https"),
-                    // e.getMessage().length()));
-                    // outStream = new BufferedOutputStream(new FileOutputStream(
-                    // destinationDir + localFileName));
-                    //
-                    // uCon = url.openConnection();
-                    // is = uCon.getInputStream();
                 }
 
                 buf = new byte[1024];
                 while ((ByteRead = is.read(buf)) != -1) {
                     outStream.write(buf, 0, ByteRead);
                     ByteWritten += ByteRead;
+                    if (fileLength > 0) // only if total length is known
+                        publishProgress((int) (ByteWritten * 100 / fileLength));
                 }
                 Log.d(TAG,"Downloaded Successfully.");
                 Log.d(TAG,"File name:\"" + localFileName
@@ -140,30 +153,22 @@ public class DownloadSong {
         }
 
         @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+            //showNotification("Downloading "+ songName +" "+values[0]+"/100");
+            Log.d(TAG, "progress: "+"Downloading "+ songName +" "+values[0]+"/100");
+        }
+
+        @Override
         protected void onPostExecute(String unused) {
             showNotification("Download Complete");
         }
     }
 
 
+    //Shows notification
     private static void showNotification(String message){
-        mBuilder.setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("Ola Music Player")
-                .setContentText(message)
-                .setAutoCancel(true)
-                .setDefaults(DEFAULT_SOUND | DEFAULT_VIBRATE | DEFAULT_LIGHTS);
-
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setAction(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, (int)
-                System.currentTimeMillis(), intent, 0);
-        mBuilder.setContentIntent(pendingIntent);
-
-
-        NotificationManager mNotificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        mBuilder.setContentText(message);
         mNotificationManager.notify(0, mBuilder.build());
     }
 

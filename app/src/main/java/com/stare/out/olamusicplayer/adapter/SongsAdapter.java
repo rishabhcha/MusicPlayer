@@ -111,7 +111,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
             @Override
             public void onClick(View view) {
                 DownloadSong downloadSong = new DownloadSong(context);
-                downloadSong.startDownload(music.getUrl());
+                downloadSong.startDownload(music.getUrl(), music.getSong());
             }
         });
     }
