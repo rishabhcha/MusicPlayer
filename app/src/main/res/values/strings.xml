@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Ola Music Player</string>
+    <string name="app_name">Music Player</string>
     <string name="artist_name">Artist Name</string>
     <string name="song_name">Song Name</string>
 

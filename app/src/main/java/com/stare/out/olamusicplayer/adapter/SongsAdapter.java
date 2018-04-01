@@ -36,6 +36,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
     private DBHelper dbHelper;
     private ExoMusicPlayer exoMusicPlayer;
     private UpdateBottomPlayerUI updateBottomPlayerUI;
+    private int currentSong;
 
     public SongsAdapter() {
 
@@ -49,6 +50,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
         favoriteMusicList = new ArrayList<>();
         dbHelper = new DBHelper(context);
         getFavoriteMusic();
+        currentSong = 0;
     }
 
     @Override
@@ -62,7 +64,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
     }
 
     @Override
-    public void onBindViewHolder(final SongsViewHolder holder, int position) {
+    public void onBindViewHolder(final SongsViewHolder holder, final int position) {
 
         final Music music = musicList.get(position);
         Glide.with(context).load(music.getCoverImage()).thumbnail(0.01f).into(holder.songImageView);
@@ -71,6 +73,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                currentSong = position;
                 updateBottomPlayerUI.setMusicPlayerDetails(music.getSong(), music.getArtists(), music.getCoverImage(), music.getUrl());
                 exoMusicPlayer.playMusic(music.getUrl());
             }
@@ -122,6 +125,31 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongsViewHol
         return musicList.size();
     }
 
+    public void playNextSong(){
+        int pos;
+        if (currentSong != getItemCount()-1){
+            pos = currentSong+1;
+        }else {
+            pos = 0;
+        }
+        currentSong = pos;
+        Music music = musicList.get(pos);
+        updateBottomPlayerUI.setMusicPlayerDetails(music.getSong(), music.getArtists(), music.getCoverImage(), music.getUrl());
+        exoMusicPlayer.playMusic(music.getUrl());
+    }
+
+    public void playPreviousSong(){
+        int pos;
+        if (currentSong != 0){
+            pos = currentSong-1;
+        }else {
+            pos = getItemCount()-1;
+        }
+        currentSong = pos;
+        Music music = musicList.get(pos);
+        updateBottomPlayerUI.setMusicPlayerDetails(music.getSong(), music.getArtists(), music.getCoverImage(), music.getUrl());
+        exoMusicPlayer.playMusic(music.getUrl());
+    }
 
     public class SongsViewHolder extends RecyclerView.ViewHolder{
 

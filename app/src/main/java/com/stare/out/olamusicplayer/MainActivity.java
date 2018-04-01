@@ -2,12 +2,18 @@ package com.stare.out.olamusicplayer;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.media.AudioManager;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -47,9 +53,12 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
+import static java.lang.Math.abs;
+
 public class MainActivity extends AppCompatActivity implements
         UpdateBottomPlayerUI,
-        SearchView.OnQueryTextListener{
+        SearchView.OnQueryTextListener,
+        SensorEventListener {
 
     private static final String TAG = "MainActivity";
     private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1111;
@@ -67,10 +76,23 @@ public class MainActivity extends AppCompatActivity implements
     private ImageView playerSongImageView;
     private RecyclerView FavRecyclerView;
 
+    AudioManager am;
+    int max,curr,direction=0,d=0;
+    static double div,result,r;
+    int flag=0;
+    String set;
+
+    private SensorManager sensorManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        am=(AudioManager)getSystemService(AUDIO_SERVICE);
+        max=am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int current=am.getStreamVolume(AudioManager.STREAM_MUSIC);
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         playerLinearLayout = (LinearLayout) findViewById(R.id.playerLinearLayout);
         music_artist = (MyTextViewLight) findViewById(R.id.music_artist);
@@ -88,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements
 
         SlideUpRecyclerView = (RecyclerView) findViewById(R.id.SlideUpRecyclerView);
         SlideUpRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        ViewCompat.setNestedScrollingEnabled(SlideUpRecyclerView, true);
 
         FavRecyclerView = (RecyclerView) findViewById(R.id.FavRecyclerView);
         FavRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
@@ -207,11 +230,6 @@ public class MainActivity extends AppCompatActivity implements
         return false;
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        checkPermission();
-    }
 
     private void checkPermission(){
         if (ContextCompat.checkSelfPermission(MainActivity.this,
@@ -247,5 +265,184 @@ public class MainActivity extends AppCompatActivity implements
                 return;
             }
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkPermission();
+        // register this class as a listener for the orientation and
+        // accelerometer sensors
+        sensorManager.registerListener(this,
+                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    @Override
+    protected void onPause() {
+        // unregister listener
+        super.onPause();
+        sensorManager.unregisterListener(this);
+    }
+
+
+    //Use sensor to increase or decrease volume and to change music track
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        Sensor s=event.sensor;
+        if(s.getType()==Sensor.TYPE_ACCELEROMETER) {
+            float[] values = event.values;
+            int x = (int) values[0];
+            int y = (int) values[1];
+            int z = (int) values[2];
+
+            if(direction==0)
+            {
+                curr = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+            }
+            if(d==0) {
+                if (y >= 5) {
+                    direction = 1;
+                    switch (y) {
+                        case 5:
+                            div = (y - 5) * ((15 - curr) / 4);
+                            result = curr + div;
+                            r=result;
+                            am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                            break;
+                        case 6:
+                            div = (y - 5) * ((15 - curr) / 4);
+                            result = curr + div;
+                            if(result>=r) {
+                                am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                r=result;
+                            }
+                            else {
+                                d = 1;
+                            }
+                            break;
+                        case 7:
+                            div = (y - 5) * ((15 - curr) / 4);
+                            result = curr + div;
+                            if(result>=r) {
+                                am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                r=result;
+                            }
+                            else
+                                d=1;
+                            break;
+                        case 8:
+                            div = (y - 5) * ((15 - curr) / 4);
+                            result = curr + div;
+                            if(result>=r) {
+                                am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                r=result;
+                            }
+
+                            else
+                                d=1;
+                            break;
+                        case 9:
+                            div = (y - 5) * ((15 - curr) / 4);
+                            result = curr + div;
+                            if(result>=r) {
+                                am.setStreamVolume(AudioManager.STREAM_MUSIC, 15, 0);
+                                r=result;
+                            }
+                            else
+                                d=1;
+                            break;
+                        default:
+                            result=15;
+                            am.setStreamVolume(AudioManager.STREAM_MUSIC, 15, 0);
+                            r=result;
+                    }
+                }
+                else if(y<=-2)
+                {
+                    direction = 1;
+                    switch (y) {
+                        case -2:
+                            div = abs(y + 2) * ((curr) / 4);
+                            result = curr - div;
+                            r=result;
+                            am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                            break;
+                        case -3:
+                            div = abs(y + 2) * ((curr) / 4);
+                            result = curr - div;
+                            if(result<=r) {
+                                am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                r=result;
+                            }
+                            else {
+                                d = 1;
+                            }
+                            break;
+                        case -4:
+                            div = abs(y + 2) * ((curr) / 4);
+                            result = curr - div;
+                            if(result<=r) {
+                                am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                r=result;
+                            }
+                            else
+                                d=1;
+                            break;
+                        case -5:
+                            div = abs(y + 2) * ((curr) / 4);
+                            result = curr - div;
+                            if(result<=r) {
+                                am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                r=result;
+                            }
+
+                            else
+                                d=1;
+                            break;
+                        case -6:
+                            div = abs(y + 2) * ((curr) / 4);
+                            result = curr - div;
+                            if(result<=r) {
+                                am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                r=result;
+                            }
+                            else
+                                d=1;
+                            break;
+                        default:
+                            result=0;
+                            am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                            r=result;
+                    }
+                }
+            }
+            if (y <= 4 && y >= -1) {
+                direction = 0;
+                d=0;
+            }
+            if (flag == 0) {
+                if (x <= -5) {
+                    flag = 1;
+                    set = "Next";
+                    songsAdapter.playNextSong();
+                }
+                else if (x >= 5) {
+                    flag = 1;
+                    set = "previous";
+                    songsAdapter.playPreviousSong();
+                }
+            } else if (flag == 1) {
+                if (x >= -1 && x <= 1) {
+                    flag = 0;
+                    set = "normal";
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
     }
 }
