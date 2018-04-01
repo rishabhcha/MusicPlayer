@@ -278,13 +278,6 @@ public class MainActivity extends AppCompatActivity implements
                 SensorManager.SENSOR_DELAY_NORMAL);
     }
 
-    @Override
-    protected void onPause() {
-        // unregister listener
-        super.onPause();
-        sensorManager.unregisterListener(this);
-    }
-
 
     //Use sensor to increase or decrease volume and to change music track
     @Override
