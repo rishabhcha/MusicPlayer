@@ -24,12 +24,30 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <android.support.v7.widget.SearchView
-                android:id="@+id/songSearchView"
-                android:layout_margin="4dp"
+            <LinearLayout
+                android:id="@+id/qwe"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/rounded"/>
+                android:orientation="horizontal">
+
+                <android.support.v7.widget.SearchView
+                    android:id="@+id/songSearchView"
+                    android:layout_margin="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded"
+                    android:layout_weight="1"/>
+
+                <ImageButton
+                    android:id="@+id/settingBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="5"
+                    android:src="@drawable/ic_settings_black_24dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="@null"/>
+
+            </LinearLayout>
 
             <com.stare.out.olamusicplayer.utils.customfonts.MyTextViewBold
                 android:id="@+id/favoriteTextView"
@@ -37,7 +55,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/colorPrimaryDark"
                 android:text="@string/favorite"
-                android:layout_below="@+id/songSearchView"
+                android:layout_below="@+id/qwe"
                 android:padding="4dp"
                 android:textSize="16sp"/>
 

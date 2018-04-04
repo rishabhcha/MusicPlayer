@@ -1,6 +1,7 @@
 package com.stare.out.olamusicplayer;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -15,6 +16,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
@@ -81,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements
     static double div,result,r;
     int flag=0;
     String set;
+    private boolean isSensor = false;
 
     private SensorManager sensorManager;
 
@@ -124,6 +127,40 @@ public class MainActivity extends AppCompatActivity implements
         getSongs();
 
         setFavoriteSongAdapter();
+
+        findViewById(R.id.settingBtn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String message = "";
+                if (isSensor){
+                    message = "Do want to disable sensor?";
+                }else{
+                    message = "Do you want to enable sensor?";
+                }
+                AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
+                builder1.setMessage(message);
+                builder1.setCancelable(true);
+
+                builder1.setPositiveButton(
+                        "Yes",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                isSensor = !isSensor;
+                            }
+                        });
+
+                builder1.setNegativeButton(
+                        "No",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+                AlertDialog alert11 = builder1.create();
+                alert11.show();
+            }
+        });
 
     }
 
@@ -282,153 +319,155 @@ public class MainActivity extends AppCompatActivity implements
     //Use sensor to increase or decrease volume and to change music track
     @Override
     public void onSensorChanged(SensorEvent event) {
-        Sensor s=event.sensor;
-        if(s.getType()==Sensor.TYPE_ACCELEROMETER) {
-            float[] values = event.values;
-            int x = (int) values[0];
-            int y = (int) values[1];
-            int z = (int) values[2];
+        if (isSensor){
+            Sensor s=event.sensor;
+            if(s.getType()==Sensor.TYPE_ACCELEROMETER) {
+                float[] values = event.values;
+                int x = (int) values[0];
+                int y = (int) values[1];
+                int z = (int) values[2];
 
-            if(direction==0)
-            {
-                curr = am.getStreamVolume(AudioManager.STREAM_MUSIC);
-            }
-            if(d==0) {
-                if (y >= 5) {
-                    direction = 1;
-                    switch (y) {
-                        case 5:
-                            div = (y - 5) * ((15 - curr) / 4);
-                            result = curr + div;
-                            r=result;
-                            am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
-                            break;
-                        case 6:
-                            div = (y - 5) * ((15 - curr) / 4);
-                            result = curr + div;
-                            if(result>=r) {
-                                am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                if(direction==0)
+                {
+                    curr = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+                }
+                if(d==0) {
+                    if (y >= 5) {
+                        direction = 1;
+                        switch (y) {
+                            case 5:
+                                div = (y - 5) * ((15 - curr) / 4);
+                                result = curr + div;
                                 r=result;
-                            }
-                            else {
-                                d = 1;
-                            }
-                            break;
-                        case 7:
-                            div = (y - 5) * ((15 - curr) / 4);
-                            result = curr + div;
-                            if(result>=r) {
                                 am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
-                                r=result;
-                            }
-                            else
-                                d=1;
-                            break;
-                        case 8:
-                            div = (y - 5) * ((15 - curr) / 4);
-                            result = curr + div;
-                            if(result>=r) {
-                                am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
-                                r=result;
-                            }
+                                break;
+                            case 6:
+                                div = (y - 5) * ((15 - curr) / 4);
+                                result = curr + div;
+                                if(result>=r) {
+                                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                    r=result;
+                                }
+                                else {
+                                    d = 1;
+                                }
+                                break;
+                            case 7:
+                                div = (y - 5) * ((15 - curr) / 4);
+                                result = curr + div;
+                                if(result>=r) {
+                                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                    r=result;
+                                }
+                                else
+                                    d=1;
+                                break;
+                            case 8:
+                                div = (y - 5) * ((15 - curr) / 4);
+                                result = curr + div;
+                                if(result>=r) {
+                                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                    r=result;
+                                }
 
-                            else
-                                d=1;
-                            break;
-                        case 9:
-                            div = (y - 5) * ((15 - curr) / 4);
-                            result = curr + div;
-                            if(result>=r) {
+                                else
+                                    d=1;
+                                break;
+                            case 9:
+                                div = (y - 5) * ((15 - curr) / 4);
+                                result = curr + div;
+                                if(result>=r) {
+                                    am.setStreamVolume(AudioManager.STREAM_MUSIC, 15, 0);
+                                    r=result;
+                                }
+                                else
+                                    d=1;
+                                break;
+                            default:
+                                result=15;
                                 am.setStreamVolume(AudioManager.STREAM_MUSIC, 15, 0);
                                 r=result;
-                            }
-                            else
-                                d=1;
-                            break;
-                        default:
-                            result=15;
-                            am.setStreamVolume(AudioManager.STREAM_MUSIC, 15, 0);
-                            r=result;
+                        }
                     }
-                }
-                else if(y<=-2)
-                {
-                    direction = 1;
-                    switch (y) {
-                        case -2:
-                            div = abs(y + 2) * ((curr) / 4);
-                            result = curr - div;
-                            r=result;
-                            am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
-                            break;
-                        case -3:
-                            div = abs(y + 2) * ((curr) / 4);
-                            result = curr - div;
-                            if(result<=r) {
-                                am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                    else if(y<=-2)
+                    {
+                        direction = 1;
+                        switch (y) {
+                            case -2:
+                                div = abs(y + 2) * ((curr) / 4);
+                                result = curr - div;
                                 r=result;
-                            }
-                            else {
-                                d = 1;
-                            }
-                            break;
-                        case -4:
-                            div = abs(y + 2) * ((curr) / 4);
-                            result = curr - div;
-                            if(result<=r) {
                                 am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
-                                r=result;
-                            }
-                            else
-                                d=1;
-                            break;
-                        case -5:
-                            div = abs(y + 2) * ((curr) / 4);
-                            result = curr - div;
-                            if(result<=r) {
-                                am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
-                                r=result;
-                            }
+                                break;
+                            case -3:
+                                div = abs(y + 2) * ((curr) / 4);
+                                result = curr - div;
+                                if(result<=r) {
+                                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                    r=result;
+                                }
+                                else {
+                                    d = 1;
+                                }
+                                break;
+                            case -4:
+                                div = abs(y + 2) * ((curr) / 4);
+                                result = curr - div;
+                                if(result<=r) {
+                                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                    r=result;
+                                }
+                                else
+                                    d=1;
+                                break;
+                            case -5:
+                                div = abs(y + 2) * ((curr) / 4);
+                                result = curr - div;
+                                if(result<=r) {
+                                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                    r=result;
+                                }
 
-                            else
-                                d=1;
-                            break;
-                        case -6:
-                            div = abs(y + 2) * ((curr) / 4);
-                            result = curr - div;
-                            if(result<=r) {
+                                else
+                                    d=1;
+                                break;
+                            case -6:
+                                div = abs(y + 2) * ((curr) / 4);
+                                result = curr - div;
+                                if(result<=r) {
+                                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
+                                    r=result;
+                                }
+                                else
+                                    d=1;
+                                break;
+                            default:
+                                result=0;
                                 am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
                                 r=result;
-                            }
-                            else
-                                d=1;
-                            break;
-                        default:
-                            result=0;
-                            am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) result, 0);
-                            r=result;
+                        }
                     }
                 }
-            }
-            if (y <= 4 && y >= -1) {
-                direction = 0;
-                d=0;
-            }
-            if (flag == 0) {
-                if (x <= -5) {
-                    flag = 1;
-                    set = "Next";
-                    songsAdapter.playNextSong();
+                if (y <= 4 && y >= -1) {
+                    direction = 0;
+                    d=0;
                 }
-                else if (x >= 5) {
-                    flag = 1;
-                    set = "previous";
-                    songsAdapter.playPreviousSong();
-                }
-            } else if (flag == 1) {
-                if (x >= -1 && x <= 1) {
-                    flag = 0;
-                    set = "normal";
+                if (flag == 0) {
+                    if (x <= -5) {
+                        flag = 1;
+                        set = "Next";
+                        songsAdapter.playNextSong();
+                    }
+                    else if (x >= 5) {
+                        flag = 1;
+                        set = "previous";
+                        songsAdapter.playPreviousSong();
+                    }
+                } else if (flag == 1) {
+                    if (x >= -1 && x <= 1) {
+                        flag = 0;
+                        set = "normal";
+                    }
                 }
             }
         }
